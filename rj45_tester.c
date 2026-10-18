@@ -7,6 +7,18 @@ static void switch_to(App* app, ViewId id) {
     view_dispatcher_switch_to_view(app->view_dispatcher, id);
 }
 
+/* 5V on GPIO pin 1 (OTG boost). Returns false if it could not be enabled. */
+static bool set_otg(App* app, bool on) {
+    if(on && !furi_hal_power_is_otg_enabled()) {
+        app->otg_enabled_by_us = furi_hal_power_enable_otg();
+        return app->otg_enabled_by_us;
+    } else if(!on && app->otg_enabled_by_us) {
+        furi_hal_power_disable_otg();
+        app->otg_enabled_by_us = false;
+    }
+    return true;
+}
+
 /* ---------- editors ---------- */
 
 static void byte_input_done(void* ctx) {
@@ -69,7 +81,22 @@ bool screen_input(InputEvent* event, void* ctx) {
 
     switch(app->screen) {
     case ScreenStatus:
-        if(event->key == InputKeyOk) worker_signal(app, app->settings.dhcp ? WF_DHCP : WF_APPLY);
+        if(event->key != InputKeyOk) break;
+        if(st->chip_ok) {
+            worker_signal(app, app->settings.dhcp ? WF_DHCP : WF_APPLY);
+        } else if(!furi_hal_power_is_otg_enabled()) {
+            /* module not found and no 5V: power it from pin 1 and remember */
+            if(set_otg(app, true)) {
+                app->settings.otg = true;
+                settings_save(app);
+                app_log(app, "5V on pin 1 enabled");
+            } else {
+                app_log(app, "5V failed (battery low?)");
+            }
+        } else {
+            app->screen = ScreenAbout;
+            app->scroll = 0;
+        }
         break;
     case ScreenPing:
         if(event->key == InputKeyOk) {
@@ -130,15 +157,6 @@ enum {
 static const char* const off_on[] = {"Off", "On"};
 static const char* const phy_names[PhyModeCount] = {"Auto", "100 Full", "100 Half", "10 Full", "10 Half"};
 static const char* const mac_names[] = {"Device", "Random", "Custom"};
-
-static void set_otg(App* app, bool on) {
-    if(on && !furi_hal_power_is_otg_enabled()) {
-        app->otg_enabled_by_us = furi_hal_power_enable_otg();
-    } else if(!on && app->otg_enabled_by_us) {
-        furi_hal_power_disable_otg();
-        app->otg_enabled_by_us = false;
-    }
-}
 
 static void settings_changed(VariableItem* item) {
     App* app = variable_item_get_context(item);

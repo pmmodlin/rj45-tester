@@ -2,6 +2,7 @@
 #include "w5500.h"
 
 #include <gui/elements.h>
+#include <furi_hal.h>
 
 const char* const ping_preset_names[] = {"Gateway", "DNS", "8.8.8.8", "1.1.1.1", "Custom"};
 
@@ -100,8 +101,17 @@ static void draw_status(Canvas* canvas, App* app) {
     if(!st->chip_ok) {
         canvas_draw_str(canvas, 0, 9, "W5500 not found");
         canvas_set_font(canvas, FontSecondary);
-        canvas_draw_str(canvas, 0, 22, "Check wiring: Menu > Wiring");
-        canvas_draw_str(canvas, 0, 31, "Retrying every second...");
+        if(!furi_hal_power_is_otg_enabled()) {
+            canvas_draw_str(canvas, 0, 22, "5V on pin 1 is off.");
+            canvas_draw_str(canvas, 0, 31, "Module on 5V? Turn it on.");
+            canvas_draw_str(canvas, 0, 40, "(saved for next start)");
+            elements_button_center(canvas, "Enable 5V");
+        } else {
+            canvas_draw_str(canvas, 0, 22, "5V is on, still no answer.");
+            canvas_draw_str(canvas, 0, 31, "Check wiring and RST pin.");
+            canvas_draw_str(canvas, 0, 40, "Retrying every second...");
+            elements_button_center(canvas, "Wiring");
+        }
         return;
     }
     /* big link badge */
