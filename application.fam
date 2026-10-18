@@ -7,7 +7,7 @@ App(
     stack_size=4 * 1024,
     fap_category="GPIO",
     fap_icon="rj45_10px.png",
-    fap_version="1.0",
+    fap_version="0.1",
     fap_author="pmmodlin",
     fap_weburl="https://github.com/pmmodlin/rj45-tester",
     fap_description="Ethernet tester on W5500: link speed and flaps, event log, DHCP, ping, DNS, ARP scan, LLDP/CDP/STP, rogue DHCP, Wake-on-LAN",

@@ -89,7 +89,7 @@ WIZnet W5500. Подключается так же, как [W5500] Ethernet, п�
 1. Скачать файл:
    - **Releases** → «Свежая сборка» (`latest`) — последний коммит основной
      ветки: <https://github.com/pmmodlin/rj45-tester/releases/tag/latest>;
-     выпуски с номером (`v1.0` и т. д.) — там же, в Releases;
+     выпуски с номером (`v0.1.0` и т. д.) — там же, в Releases;
    - или **Actions** → нужный запуск → внизу раздел *Artifacts* (нужно войти
      в GitHub; файл придёт в zip, внутри `.fap`).
 2. Положить на SD-карту Flipper в `apps/GPIO/` (имя файла можно оставить
@@ -139,5 +139,6 @@ ufbt                            # пакет — dist/rj45_tester.fap
 ufbt launch                     # собрать, залить по USB и запустить
 ```
 
-Свой выпуск с номером: `git tag v1.0 && git push origin v1.0` — Actions
-соберёт и выложит файлы в Releases.
+Свой выпуск с номером: заметки — в `release-notes/vX.Y.Z.md`, версия — в
+`fap_version` в `application.fam`, затем `git tag vX.Y.Z && git push origin
+vX.Y.Z` — Actions соберёт и выложит файлы в Releases.
