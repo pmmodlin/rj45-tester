@@ -140,5 +140,6 @@ ufbt launch                     # собрать, залить по USB и за�
 ```
 
 Свой выпуск с номером: заметки — в `release-notes/vX.Y.Z.md`, версия — в
-`fap_version` в `application.fam`, затем `git tag vX.Y.Z && git push origin
-vX.Y.Z` — Actions соберёт и выложит файлы в Releases.
+`fap_version` в `application.fam`. Затем либо **Actions → Build → Run
+workflow**, в поле «Тег выпуска» — `vX.Y.Z`, либо `git tag vX.Y.Z && git push
+origin vX.Y.Z`. Actions соберёт, создаст тег и выложит файлы в Releases.

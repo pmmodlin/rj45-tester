@@ -6,6 +6,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Тег выпуска, например v0.1.0 (пусто — просто собрать)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -56,7 +61,10 @@ jobs:
   release:
     name: Publish release
     needs: build
-    if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+    if: >-
+      (github.event_name == 'push' && (github.ref_type == 'tag' ||
+        github.ref == format('refs/heads/{0}', github.event.repository.default_branch))) ||
+      (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,17 +79,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -e
           ls -l out
+          TAG=""
           if [ "${{ github.ref_type }}" = "tag" ]; then
             TAG="${{ github.ref_name }}"
+          elif [ -n "$RELEASE_TAG" ]; then
+            # выпуск из панели Actions: тег создаётся на собранном коммите
+            TAG="$RELEASE_TAG"
+          fi
+          if [ -n "$TAG" ]; then
             NOTES="release-notes/$TAG.md"
             if [ -f "$NOTES" ]; then
-              gh release create "$TAG" out/*.fap --repo "$REPO" --title "$TAG" --notes-file "$NOTES" --latest
+              gh release create "$TAG" out/*.fap --repo "$REPO" --title "$TAG" --notes-file "$NOTES" --latest \
+                --target "${{ github.sha }}"
             else
               gh release create "$TAG" out/*.fap --repo "$REPO" --title "$TAG" --latest \
-                --notes "Сборка $TAG. Какой файл ставить — см. README."
+                --target "${{ github.sha }}" --notes "Сборка $TAG. Какой файл ставить — см. README."
             fi
           else
             # «latest» — свежая сборка последнего коммита основной ветки
