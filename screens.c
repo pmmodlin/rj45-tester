@@ -14,7 +14,7 @@ static const char* screen_title(Screen s) {
     case ScreenStatus:
         return "Link status";
     case ScreenNeighbors:
-        return "Switch / neighbors";
+        return "Neighbors";
     case ScreenPing:
         return "Ping";
     case ScreenDns:
@@ -114,7 +114,7 @@ static void draw_status(Canvas* canvas, App* app) {
         }
         return;
     }
-    /* big link badge */
+    /* badge on the left, speed next to it */
     if(st->link) {
         canvas_draw_rbox(canvas, 0, 0, 40, 14, 2);
         canvas_set_color(canvas, ColorWhite);
@@ -130,17 +130,15 @@ static void draw_status(Canvas* canvas, App* app) {
     } else {
         canvas_draw_rframe(canvas, 0, 0, 40, 14, 2);
         canvas_draw_str(canvas, 4, 11, "DOWN");
-        canvas_set_font(canvas, FontSecondary);
-        canvas_draw_str(canvas, 44, 10, "no cable / no peer");
     }
     canvas_set_font(canvas, FontSecondary);
-    fmt_dur(b, sizeof(b), now - st->link_change_tick);
-    canvas_draw_str_aligned(canvas, 127, 2, AlignRight, AlignTop, b);
 
     /* four lines between the badge and the footer */
     Lines l = {canvas, app->scroll, 0, 4, 15};
     canvas_draw_line(canvas, 0, 15, 127, 15);
 
+    fmt_dur(b, sizeof(b), now - st->link_change_tick);
+    line(&l, "%s for %s", st->link ? "Up" : "Down", b);
     if(st->have_ip) {
         line(&l, "IP  " IPF, IPA(st->ip));
         uint32_t m = (st->mask[0] << 24) | (st->mask[1] << 16) | (st->mask[2] << 8) | st->mask[3];
@@ -185,10 +183,9 @@ static void draw_status(Canvas* canvas, App* app) {
     line(&l, "PHY setting: %s", app->settings.phy_mode == PhyAuto ? "auto" : "forced");
     app->scroll = MIN(app->scroll, MAX(0, l.line - l.visible));
 
-    /* footer hint */
-    canvas_draw_line(canvas, 0, 55, 127, 55);
-    canvas_draw_str(canvas, 0, 63, app->settings.dhcp ? "OK: renew DHCP" : "OK: re-apply");
-    if(l.line > l.visible) canvas_draw_str_aligned(canvas, 127, 63, AlignRight, AlignBottom, "^v");
+    if(l.line > l.visible)
+        elements_scrollbar_pos(canvas, 128, 17, 36, app->scroll, l.line - l.visible + 1);
+    elements_button_center(canvas, app->settings.dhcp ? "Renew DHCP" : "Re-apply");
 }
 
 static void draw_neighbors(Canvas* canvas, App* app) {
